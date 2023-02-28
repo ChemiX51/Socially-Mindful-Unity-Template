@@ -13,7 +13,7 @@ public class PixelArtWindow : EditorWindow
     public int y = 16;
     public Texture2D texture;
 
-    PixelGrid pixel;
+    PixelGrid pixels;
 
     bool editExistingTexture = false;
     bool zoomIn = false;
@@ -75,8 +75,14 @@ public class PixelArtWindow : EditorWindow
         EditorGUILayout.EndVertical();
 
         Rect pixelEditor = EditorGUILayout.BeginVertical();
-       
-        
+
+        if (pixels == null)
+        {
+            pixels = new PixelGrid(x, y, position, pixelEditor, 1);
+        }
+
+        pixels.Draw();
+        pixels.PixelUpdate(color);
 
         EditorGUILayout.EndVertical();
         EditorGUILayout.EndHorizontal();
@@ -90,34 +96,48 @@ class Pixel {
     public int size;
     public Color color;
 
-    private Rect rect;
-
-    public Pixel(float x, float y, int size, Color color) {
-        this.x = x;
-        this.y = y;
-        this.size = size;
-        this.color = color;
-
-        rect = new Rect(x, y, size, size);
-        EditorGUI.DrawRect(rect, color);
+    public Pixel()
+    {
+        x = 16;
+        y = 16;
+        size = 16;
+        color = Color.black;
     }
 
-    public void colorFill(Color color) {
-        if (rect.Contains(Event.current.mousePosition)) {
-            EditorGUI.DrawRect(rect, color);
+    public void ColorFill(Color color)
+    {
+        Rect rect = new Rect(x, y, size, size);
+
+        if (rect.Contains(Event.current.mousePosition))
+        {
+            this.color = color;
+            //EditorGUI.DrawRect(rect, color);
         }
+    }
+
+    public void Draw() {
+        EditorGUI.DrawRect(new Rect(x, y, size, size), color);
     }
 }
 
 class PixelGrid {
     public Pixel[,] pixels;
+    public int x;
+    public int y;
 
     public PixelGrid(int x, int y, Rect position, Rect pixelEditor, double zoomMultiplier)
     {
+        this.x = x;
+        this.y = y;
+
+        pixels = new Pixel[x, y];
+
         for (int i = 0; i < x; i++)
         {
             for (int j = 0; j < y; j++)
             {
+                pixels[i, j] = new Pixel();
+
                 Color pixelColor = (i + j) % 2 == 0 ? Color.white : new Color(0.8f, 0.8f, 0.8f, 1f);
                 pixels[i, j].color = pixelColor;
 
@@ -129,6 +149,28 @@ class PixelGrid {
 
                 float yPos = position.height - pixelEditor.y > (y * pixelSize) + 16 ? ((position.height - (y * pixelSize)) / 2f) + (pixelSize * j) : (pixelEditor.y + 16) + (pixelSize * j);
                 pixels[i, j].y = yPos;
+            }
+        }
+    }
+
+    public void Draw()
+    {
+        for (int i = 0; i < x; i++)
+        {
+            for (int j = 0; j < y; j++)
+            {
+                pixels[i, j].Draw();
+            }
+        }
+    }
+
+    public void PixelUpdate(Color pixelColor)
+    {
+        for (int i = 0; i < x; i++)
+        {
+            for (int j = 0; j < y; j++)
+            {
+                pixels[i, j].ColorFill(pixelColor);
             }
         }
     }
